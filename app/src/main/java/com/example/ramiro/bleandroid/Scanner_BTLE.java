@@ -25,7 +25,11 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+
+import com.neovisionaries.bluetooth.ble.advertising.ADPayloadParser;
 import com.neovisionaries.bluetooth.ble.advertising.ADStructure;
+import com.neovisionaries.bluetooth.ble.advertising.Eddystone;
+import com.neovisionaries.bluetooth.ble.advertising.EddystoneUID;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,15 +197,26 @@ public class Scanner_BTLE {
                     final int new_rssi = result.getRssi();
                     final String adv = result.getScanRecord().getBytes().toString();
 
+                    List<ADStructure> structures = ADPayloadParser.getInstance().parse(result.getScanRecord().getBytes());
+                    for (ADStructure structure : structures) {
 
 
-                    if (result.getRssi() > signalStrength) {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                ma.addDevice(btDevice, new_rssi, adv);
-                            }
-                        });
+                        if (structure instanceof EddystoneUID) {
+                            EddystoneUID es = (EddystoneUID) structure;
+                            Log.d("tag", "Tx Power = " + es.getTxPower());
+                            Log.d("tag", "Namespace ID = " + es.getNamespaceIdAsString());
+                            Log.d("tag", "Instance ID = " + es.getInstanceIdAsString());
+                            Log.d("TAG", "Beacon ID = " + es.getBeaconIdAsString());
+                        }
+
+                        if (result.getRssi() > signalStrength) {
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ma.addDevice(btDevice, new_rssi, adv);
+                                }
+                            });
+                        }
                     }
                 }
                 @Override
